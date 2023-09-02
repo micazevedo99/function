@@ -1,0 +1,35 @@
+apiVersion: nuclio.io/v1
+kind: Function
+metadata:
+  name: crop-function
+  namespace: nuclio
+spec:
+  description: A function to crop images
+  handler: main:handler
+  runtime: python:3.8
+  env:
+    - name: MODEL_PATH
+      value: "./best.pt" # Changed to a relative path
+  build:
+    baseImage: python:3.8
+    commands:
+      - apt-get update && apt-get install -y wget unzip libgl1-mesa-glx
+      - pip install -r requirements.txt
+
+      # Removed the mkdir -p /models line
+      - wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1mUM3QFYNgW0tBdk_KkY3MeJ7vEBnKcKO' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1mUM3QFYNgW0tBdk_KkY3MeJ7vEBnKcKO" -O best.pt && rm -rf /tmp/cookies.txt # Modified the path to ./best.pt
+  triggers:
+    httpTrigger:
+      kind: http
+      maxWorkers: 4
+      attributes:
+        port: 8081 # or any other available port
+  resources:
+    requests:
+      cpu: 1000m # 1 CPU
+      memory: 256Mi
+    limits:
+      cpu: 4000m # 4 CPUs
+      memory: 1024Mi
+  platform:
+    attributes:

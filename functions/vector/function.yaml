@@ -1,0 +1,36 @@
+apiVersion: nuclio.io/v1
+kind: Function
+metadata:
+  name: vector-function
+  namespace: nuclio
+spec:
+  description: A function to get image feature vectors
+  handler: main:handler
+  runtime: python:3.8
+  env:
+    - name: MODEL_PATH
+      value: "./model_76.pth"
+  build:
+    baseImage: python:3.8
+    commands:
+      - pip install Pillow
+      - pip install numpy
+      - pip install torch
+      - pip install torchvision
+      - apt-get update && apt-get install -y wget unzip
+      - wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1mUM3QFYNgW0tBdk_KkY3MeJ7vEBnKcKO' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1mUM3QFYNgW0tBdk_KkY3MeJ7vEBnKcKO" -O model_76.pth && rm -rf /tmp/cookies.txt
+  triggers:
+    httpTrigger:
+      kind: http
+      maxWorkers: 4
+      attributes:
+        port: 8080
+  resources:
+  requests:
+    cpu: 1000m # 1 CPU
+    memory: 256Mi
+  limits:
+    cpu: 4000m # 4 CPUs
+    memory: 1024Mi
+  platform:
+    attributes:
